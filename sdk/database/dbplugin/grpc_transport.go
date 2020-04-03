@@ -66,7 +66,7 @@ func (s *gRPCServer) RevokeUser(ctx context.Context, req *RevokeUserRequest) (*E
 
 func (s *gRPCServer) RotateRootCredentials(ctx context.Context, req *RotateRootCredentialsRequest) (*RotateRootCredentialsResponse, error) {
 
-	resp, err := s.impl.RotateRootCredentials(ctx, req.Statements)
+	resp, err := s.impl.RotateRootCredentials(ctx, req.Statements, req.Password)
 	if err != nil {
 		return nil, err
 	}
@@ -234,7 +234,7 @@ func (c *gRPCClient) RevokeUser(ctx context.Context, statements Statements, user
 	return nil
 }
 
-func (c *gRPCClient) RotateRootCredentials(ctx context.Context, statements []string) (conf map[string]interface{}, err error) {
+func (c *gRPCClient) RotateRootCredentials(ctx context.Context, statements []string, password string) (conf map[string]interface{}, err error) {
 	ctx, cancel := context.WithCancel(ctx)
 	quitCh := pluginutil.CtxCancelIfCanceled(cancel, c.doneCtx)
 	defer close(quitCh)
@@ -242,6 +242,7 @@ func (c *gRPCClient) RotateRootCredentials(ctx context.Context, statements []str
 
 	resp, err := c.client.RotateRootCredentials(ctx, &RotateRootCredentialsRequest{
 		Statements: statements,
+		Password: password,
 	})
 
 	if err != nil {

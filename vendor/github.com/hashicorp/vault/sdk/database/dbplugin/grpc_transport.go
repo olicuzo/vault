@@ -64,9 +64,9 @@ func (s *gRPCServer) RevokeUser(ctx context.Context, req *RevokeUserRequest) (*E
 	return &Empty{}, err
 }
 
-func (s *gRPCServer) RotateRootCredentials(ctx context.Context, req *RotateRootCredentialsRequest) (*RotateRootCredentialsResponse, error) {
+func (s *gRPCServer) RotateRootCredentials(ctx context.Context, req *RotateRootCredentialsRequest, password string) (*RotateRootCredentialsResponse, error) {
 
-	resp, err := s.impl.RotateRootCredentials(ctx, req.Statements)
+	resp, err := s.impl.RotateRootCredentials(ctx, req.Statements, password)
 	if err != nil {
 		return nil, err
 	}

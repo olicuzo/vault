@@ -204,7 +204,7 @@ func (m *MySQL) RevokeUser(ctx context.Context, statements dbplugin.Statements, 
 	return nil
 }
 
-func (m *MySQL) RotateRootCredentials(ctx context.Context, statements []string) (map[string]interface{}, error) {
+func (m *MySQL) RotateRootCredentials(ctx context.Context, statements []string, password string) (map[string]interface{}, error) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -229,11 +229,6 @@ func (m *MySQL) RotateRootCredentials(ctx context.Context, statements []string) 
 	defer func() {
 		tx.Rollback()
 	}()
-
-	password, err := m.GeneratePassword()
-	if err != nil {
-		return nil, err
-	}
 
 	for _, stmt := range rotateStatements {
 		for _, query := range strutil.ParseArbitraryStringSlice(stmt, ";") {

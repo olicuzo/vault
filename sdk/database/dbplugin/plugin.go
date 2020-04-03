@@ -42,7 +42,7 @@ type Database interface {
 
 	// RotateRootCredentials is triggered by a root credential rotation call to
 	// the API.
-	RotateRootCredentials(ctx context.Context, statements []string) (config map[string]interface{}, err error)
+	RotateRootCredentials(ctx context.Context, statements []string, password string) (config map[string]interface{}, err error)
 
 	// GenerateCredentials returns a generated password for the plugin. This is
 	// used in combination with SetCredentials to set a specific password for a

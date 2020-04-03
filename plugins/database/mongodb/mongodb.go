@@ -226,7 +226,7 @@ func (m *MongoDB) RevokeUser(ctx context.Context, statements dbplugin.Statements
 }
 
 // RotateRootCredentials is not currently supported on MongoDB
-func (m *MongoDB) RotateRootCredentials(ctx context.Context, statements []string) (map[string]interface{}, error) {
+func (m *MongoDB) RotateRootCredentials(ctx context.Context, statements []string, password string) (map[string]interface{}, error) {
 	return nil, errors.New("root credential rotation is not currently implemented in this database secrets engine")
 }
 

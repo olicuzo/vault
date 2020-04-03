@@ -24,6 +24,9 @@ const (
 
 	// WAL storage key used for static account rotations
 	staticWALKey = "staticRotationKey"
+
+	// WAL storage key used for root credential rotations
+	rootWALKey = "rootRotationKey"
 )
 
 // populateQueue loads the priority queue with existing static accounts. This
@@ -117,6 +120,13 @@ type setCredentialsWAL struct {
 
 	LastVaultRotation time.Time `json:"last_vault_rotation"`
 
+	walID string
+}
+
+type rotateCredentialsWAL struct {
+	Username    string `json:"username"`
+	NewPassword string `json:"new_password"`
+	OldPassword string `json:"old_password"`
 	walID string
 }
 

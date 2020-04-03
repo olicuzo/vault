@@ -80,8 +80,24 @@ func (b *databaseBackend) pathRotateCredentialsUpdate() framework.OperationFunc 
 		db.Lock()
 		defer db.Unlock()
 
-		connectionDetails, err := db.RotateRootCredentials(ctx, config.RootCredentialsRotateStatements)
+		// Generate a new password
+		newPassword, err := db.GenerateCredentials(ctx)
+
+		// Part 1: Write a WAL with the new proposed password
+		WALID, err := framework.PutWAL(ctx, req.Storage, rootWALKey, &rotateCredentialsWAL{
+			Username:          config.ConnectionDetails["username"].(string),
+			OldPassword:       config.ConnectionDetails["password"].(string),
+			NewPassword:       newPassword,
+		})
 		if err != nil {
+			b.Logger().Error("error writing WAL entry", "err", err)
+			return nil, err
+		}
+
+		// Part 2: Rotate the root credentials of the database
+		connectionDetails, err := db.RotateRootCredentials(ctx, config.RootCredentialsRotateStatements, newPassword)
+		if err != nil {
+			// TODO: Delete WAL? No update to database
 			return nil, err
 		}
 
@@ -90,21 +106,27 @@ func (b *databaseBackend) pathRotateCredentialsUpdate() framework.OperationFunc 
 		if err != nil {
 			return nil, err
 		}
+
+		// Part 3: Update Vault storage with the new credentials
 		if err := req.Storage.Put(ctx, entry); err != nil {
 			return nil, err
 		}
 
+		// Part 4: Delete the WAL entry after successfully rotating credentials
+		if err := framework.DeleteWAL(ctx, req.Storage, WALID); err != nil {
+			b.Logger().Error("error writing WAL entry", "err", err)
+			return nil, err
+		}
+
 		// Close the plugin
-		db.closed = true
-		if err := db.Database.Close(); err != nil {
+		if err := b.ClearConnection(name); err != nil {
 			b.Logger().Error("error closing the database plugin connection", "err", err)
 		}
-		// Even on error, still remove the connection
-		delete(b.connections, name)
 
 		return nil, nil
 	}
 }
+
 func (b *databaseBackend) pathRotateRoleCredentialsUpdate() framework.OperationFunc {
 	return func(ctx context.Context, req *logical.Request, data *framework.FieldData) (*logical.Response, error) {
 		name := data.Get("name").(string)

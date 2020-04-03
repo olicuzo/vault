@@ -54,13 +54,13 @@ func (mw *databaseTracingMiddleware) RevokeUser(ctx context.Context, statements 
 	return mw.next.RevokeUser(ctx, statements, username)
 }
 
-func (mw *databaseTracingMiddleware) RotateRootCredentials(ctx context.Context, statements []string) (conf map[string]interface{}, err error) {
+func (mw *databaseTracingMiddleware) RotateRootCredentials(ctx context.Context, statements []string, password string) (conf map[string]interface{}, err error) {
 	defer func(then time.Time) {
 		mw.logger.Trace("rotate root credentials", "status", "finished", "err", err, "took", time.Since(then))
 	}(time.Now())
 
 	mw.logger.Trace("rotate root credentials", "status", "started")
-	return mw.next.RotateRootCredentials(ctx, statements)
+	return mw.next.RotateRootCredentials(ctx, statements, password)
 }
 
 func (mw *databaseTracingMiddleware) Initialize(ctx context.Context, conf map[string]interface{}, verifyConnection bool) error {
@@ -166,7 +166,7 @@ func (mw *databaseMetricsMiddleware) RevokeUser(ctx context.Context, statements 
 	return mw.next.RevokeUser(ctx, statements, username)
 }
 
-func (mw *databaseMetricsMiddleware) RotateRootCredentials(ctx context.Context, statements []string) (conf map[string]interface{}, err error) {
+func (mw *databaseMetricsMiddleware) RotateRootCredentials(ctx context.Context, statements []string, password string) (conf map[string]interface{}, err error) {
 	defer func(now time.Time) {
 		metrics.MeasureSince([]string{"database", "RotateRootCredentials"}, now)
 		metrics.MeasureSince([]string{"database", mw.typeStr, "RotateRootCredentials"}, now)
@@ -179,7 +179,7 @@ func (mw *databaseMetricsMiddleware) RotateRootCredentials(ctx context.Context, 
 
 	metrics.IncrCounter([]string{"database", "RotateRootCredentials"}, 1)
 	metrics.IncrCounter([]string{"database", mw.typeStr, "RotateRootCredentials"}, 1)
-	return mw.next.RotateRootCredentials(ctx, statements)
+	return mw.next.RotateRootCredentials(ctx, statements, password)
 }
 
 func (mw *databaseMetricsMiddleware) Initialize(ctx context.Context, conf map[string]interface{}, verifyConnection bool) error {
@@ -286,8 +286,8 @@ func (mw *DatabaseErrorSanitizerMiddleware) RevokeUser(ctx context.Context, stat
 	return mw.sanitize(mw.next.RevokeUser(ctx, statements, username))
 }
 
-func (mw *DatabaseErrorSanitizerMiddleware) RotateRootCredentials(ctx context.Context, statements []string) (conf map[string]interface{}, err error) {
-	conf, err = mw.next.RotateRootCredentials(ctx, statements)
+func (mw *DatabaseErrorSanitizerMiddleware) RotateRootCredentials(ctx context.Context, statements []string, password string) (conf map[string]interface{}, err error) {
+	conf, err = mw.next.RotateRootCredentials(ctx, statements, password)
 	return conf, mw.sanitize(err)
 }
 

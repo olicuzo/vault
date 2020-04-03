@@ -471,7 +471,7 @@ func (p *PostgreSQL) defaultRevokeUser(ctx context.Context, username string) err
 	return nil
 }
 
-func (p *PostgreSQL) RotateRootCredentials(ctx context.Context, statements []string) (map[string]interface{}, error) {
+func (p *PostgreSQL) RotateRootCredentials(ctx context.Context, statements []string, password string) (map[string]interface{}, error) {
 	p.Lock()
 	defer p.Unlock()
 
@@ -496,11 +496,6 @@ func (p *PostgreSQL) RotateRootCredentials(ctx context.Context, statements []str
 	defer func() {
 		tx.Rollback()
 	}()
-
-	password, err := p.GeneratePassword()
-	if err != nil {
-		return nil, err
-	}
 
 	for _, stmt := range rotateStatements {
 		for _, query := range strutil.ParseArbitraryStringSlice(stmt, ";") {

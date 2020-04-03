@@ -465,7 +465,7 @@ $$;`)
 	return nil
 }
 
-func (r *RedShift) RotateRootCredentials(ctx context.Context, statements []string) (map[string]interface{}, error) {
+func (r *RedShift) RotateRootCredentials(ctx context.Context, statements []string, password string) (map[string]interface{}, error) {
 	r.Lock()
 	defer r.Unlock()
 
@@ -491,11 +491,6 @@ func (r *RedShift) RotateRootCredentials(ctx context.Context, statements []strin
 	defer func() {
 		tx.Rollback()
 	}()
-
-	password, err := r.GeneratePassword()
-	if err != nil {
-		return nil, err
-	}
 
 	for _, stmt := range rotateStatements {
 		for _, query := range strutil.ParseArbitraryStringSlice(stmt, ";") {

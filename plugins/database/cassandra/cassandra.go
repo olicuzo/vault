@@ -194,7 +194,7 @@ func (c *Cassandra) RevokeUser(ctx context.Context, statements dbplugin.Statemen
 	return result.ErrorOrNil()
 }
 
-func (c *Cassandra) RotateRootCredentials(ctx context.Context, statements []string) (map[string]interface{}, error) {
+func (c *Cassandra) RotateRootCredentials(ctx context.Context, statements []string, password string) (map[string]interface{}, error) {
 	// Grab the lock
 	c.Lock()
 	defer c.Unlock()
@@ -207,11 +207,6 @@ func (c *Cassandra) RotateRootCredentials(ctx context.Context, statements []stri
 	rotateCQL := statements
 	if len(rotateCQL) == 0 {
 		rotateCQL = []string{defaultRootCredentialRotationCQL}
-	}
-
-	password, err := c.GeneratePassword()
-	if err != nil {
-		return nil, err
 	}
 
 	var result *multierror.Error

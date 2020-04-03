@@ -297,7 +297,7 @@ func (m *MSSQL) revokeUserDefault(ctx context.Context, username string) error {
 	return nil
 }
 
-func (m *MSSQL) RotateRootCredentials(ctx context.Context, statements []string) (map[string]interface{}, error) {
+func (m *MSSQL) RotateRootCredentials(ctx context.Context, statements []string, password string) (map[string]interface{}, error) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -322,11 +322,6 @@ func (m *MSSQL) RotateRootCredentials(ctx context.Context, statements []string) 
 	defer func() {
 		tx.Rollback()
 	}()
-
-	password, err := m.GeneratePassword()
-	if err != nil {
-		return nil, err
-	}
 
 	for _, stmt := range rotateStatents {
 		for _, query := range strutil.ParseArbitraryStringSlice(stmt, ";") {

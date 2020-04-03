@@ -36,6 +36,7 @@ message RevokeUserRequest {
 
 message RotateRootCredentialsRequest {
 	repeated string statements = 1;
+	string password = 2;
 }
 
 message Statements {
@@ -109,7 +110,7 @@ service Database {
 	rpc Close(Empty) returns (Empty);
 	rpc SetCredentials(SetCredentialsRequest) returns (SetCredentialsResponse);
 	rpc GenerateCredentials(Empty) returns (GenerateCredentialsResponse);
-	
+
 	rpc Initialize(InitializeRequest) returns (Empty) {
 		option deprecated = true;
 	};
