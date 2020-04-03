@@ -242,7 +242,7 @@ func (c *gRPCClient) RotateRootCredentials(ctx context.Context, statements []str
 
 	resp, err := c.client.RotateRootCredentials(ctx, &RotateRootCredentialsRequest{
 		Statements: statements,
-		Password: password,
+		Password:   password,
 	})
 
 	if err != nil {
