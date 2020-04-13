@@ -25,6 +25,7 @@ import (
 
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/vault/api"
@@ -674,6 +675,8 @@ func TestWaitLeaderMatches(ctx context.Context, client *api.Client, ready func(r
 
 // end test helper methods
 
+var DefaultNumCores = 3
+
 // NewDockerCluster creates a managed docker container running Vault
 func NewDockerCluster(name string, base *vault.CoreConfig, opts *DockerClusterOptions) (rc *DockerCluster, err error) {
 	cluster := DockerCluster{
@@ -695,66 +698,66 @@ func NewDockerCluster(name string, base *vault.CoreConfig, opts *DockerClusterOp
 		}
 		cluster.TempDir = tempDir
 	}
-	//	caDir := filepath.Join(cluster.TempDir, "ca")
-	//	if err := os.MkdirAll(caDir, 0755); err != nil {
-	//		return nil, err
-	//	}
+	caDir := filepath.Join(cluster.TempDir, "ca")
+	if err := os.MkdirAll(caDir, 0755); err != nil {
+		return nil, err
+	}
 
-	//	var numCores int
-	//	if opts == nil || opts.NumCores == 0 {
-	//		numCores = DefaultNumCores
-	//	} else {
-	//		numCores = opts.NumCores
-	//	}
+	var numCores int
+	if opts == nil || opts.NumCores == 0 {
+		numCores = DefaultNumCores
+	} else {
+		numCores = opts.NumCores
+	}
 
-	//	if opts != nil && opts.RequireClientAuth {
-	//		cluster.ClientAuthRequired = true
-	//	}
+	if opts != nil && opts.RequireClientAuth {
+		cluster.ClientAuthRequired = true
+	}
 
-	//	cidr := "192.168.128.0/20"
-	//	//baseIP, _, err := net.ParseCIDR(cidr)
-	//	//baseIPv4 := baseIP.To4()
-	//	//if err != nil {
-	//	//	return nil, err
-	//	//}
-	//	for i := 0; i < numCores; i++ {
-	//		nodeID := fmt.Sprintf("vault-%d", i)
-	//		node := &DockerClusterNode{
-	//			NodeID: nodeID,
-	//			//Address: &net.TCPAddr{
-	//			//	IP: net.IPv4(baseIPv4[0], baseIPv4[1], baseIPv4[2], byte(i+2)),
-	//			//	Port: 8200,
-	//			//},
-	//			Cluster: &cluster,
-	//			WorkDir: filepath.Join(cluster.TempDir, nodeID),
-	//		}
-	//		cluster.ClusterNodes = append(cluster.ClusterNodes, node)
-	//		if err := os.MkdirAll(node.WorkDir, 0700); err != nil {
-	//			return nil, err
-	//		}
-	//	}
+	cidr := "192.168.128.0/20"
+	//baseIP, _, err := net.ParseCIDR(cidr)
+	//baseIPv4 := baseIP.To4()
+	//if err != nil {
+	//	return nil, err
+	//}
+	for i := 0; i < numCores; i++ {
+		nodeID := fmt.Sprintf("vault-%d", i)
+		node := &DockerClusterNode{
+			NodeID: nodeID,
+			//Address: &net.TCPAddr{
+			//	IP: net.IPv4(baseIPv4[0], baseIPv4[1], baseIPv4[2], byte(i+2)),
+			//	Port: 8200,
+			//},
+			Cluster: &cluster,
+			WorkDir: filepath.Join(cluster.TempDir, nodeID),
+		}
+		cluster.ClusterNodes = append(cluster.ClusterNodes, node)
+		if err := os.MkdirAll(node.WorkDir, 0700); err != nil {
+			return nil, err
+		}
+	}
 
-	//	err = cluster.setupCA(opts)
-	//	if err != nil {
-	//		return nil, err
-	//	}
+	err = cluster.setupCA(opts)
+	if err != nil {
+		return nil, err
+	}
 
-	//	cli, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithVersion("1.40"))
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	netName := "vault-test"
-	//	_, err = SetupNetwork(cli, netName, cidr)
-	//	if err != nil {
-	//		return nil, err
-	//	}
+	cli, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithVersion("1.40"))
+	if err != nil {
+		return nil, err
+	}
+	netName := "vault-test"
+	_, err = SetupNetwork(cli, netName, cidr)
+	if err != nil {
+		return nil, err
+	}
 
-	//	for _, node := range cluster.ClusterNodes {
-	//		err := node.Start(cli, caDir, netName, node)
-	//		if err != nil {
-	//			return nil, err
-	//		}
-	//	}
+	for _, node := range cluster.ClusterNodes {
+		err := node.Start(cli, caDir, netName, node)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	//	if opts == nil || !opts.SkipInit {
 	//		if err := cluster.Initialize(context.Background()); err != nil {
@@ -764,4 +767,54 @@ func NewDockerCluster(name string, base *vault.CoreConfig, opts *DockerClusterOp
 
 	//	return &cluster, nil
 	return nil, nil
+}
+
+// Docker networking functions
+// SetupNetwork establishes networking for the Docker container
+func SetupNetwork(cli *docker.Client, netName, cidr string) (string, error) {
+	ctx := context.Background()
+
+	netResources, err := cli.NetworkList(ctx, types.NetworkListOptions{})
+	if err != nil {
+		return "", err
+	}
+	for _, netRes := range netResources {
+		if netRes.Name == netName {
+			if len(netRes.IPAM.Config) > 0 && netRes.IPAM.Config[0].Subnet == cidr {
+				return netRes.ID, nil
+			}
+			err = cli.NetworkRemove(ctx, netRes.ID)
+			if err != nil {
+				return "", err
+			}
+		}
+	}
+
+	id, err := createNetwork(cli, netName, cidr)
+	if err != nil {
+		return "", fmt.Errorf("couldn't create network %s on %s: %w", netName, cidr, err)
+	}
+	return id, nil
+}
+
+func createNetwork(cli *docker.Client, netName, cidr string) (string, error) {
+	resp, err := cli.NetworkCreate(context.Background(), netName, types.NetworkCreate{
+		CheckDuplicate: true,
+		Driver:         "bridge",
+		Options:        map[string]string{},
+		IPAM: &network.IPAM{
+			Driver:  "default",
+			Options: map[string]string{},
+			Config: []network.IPAMConfig{
+				{
+					Subnet: cidr,
+				},
+			},
+		},
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return resp.ID, nil
 }
