@@ -759,14 +759,13 @@ func NewDockerCluster(name string, base *vault.CoreConfig, opts *DockerClusterOp
 		}
 	}
 
-	//	if opts == nil || !opts.SkipInit {
-	//		if err := cluster.Initialize(context.Background()); err != nil {
-	//			return nil, err
-	//		}
-	//	}
+	if opts == nil || !opts.SkipInit {
+		if err := cluster.Initialize(context.Background()); err != nil {
+			return nil, err
+		}
+	}
 
-	//	return &cluster, nil
-	return nil, nil
+	return &cluster, nil
 }
 
 // Docker networking functions
