@@ -10,6 +10,7 @@ import (
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/strslice"
 	docker "github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/archive"
 )
 
 // Runner manages the lifecycle of the Docker container
@@ -59,46 +60,44 @@ func (d *Runner) Start(ctx context.Context) (*types.ContainerJSON, error) {
 	cfg.Hostname = d.ContainerName
 	//fullName := d.NetName + "." + d.ContainerName
 	fullName := d.ContainerName
-	// container, err := d.DockerAPI.ContainerCreate(ctx, &cfg, hostConfig, networkingConfig, fullName)
-	_, err := d.DockerAPI.ContainerCreate(ctx, &cfg, hostConfig, networkingConfig, fullName)
+	container, err := d.DockerAPI.ContainerCreate(ctx, &cfg, hostConfig, networkingConfig, fullName)
 	if err != nil {
 		return nil, fmt.Errorf("container create failed: %v", err)
 	}
 
-	//	for from, to := range d.CopyFromTo {
-	//		srcInfo, err := archive.CopyInfoSourcePath(from, false)
-	//		if err != nil {
-	//			return nil, fmt.Errorf("error copying from source %q: %v", from, err)
-	//		}
+	for from, to := range d.CopyFromTo {
+		srcInfo, err := archive.CopyInfoSourcePath(from, false)
+		if err != nil {
+			return nil, fmt.Errorf("error copying from source %q: %v", from, err)
+		}
 
-	//		srcArchive, err := archive.TarResource(srcInfo)
-	//		if err != nil {
-	//			return nil, fmt.Errorf("error creating tar from source %q: %v", from, err)
-	//		}
-	//		defer srcArchive.Close()
+		srcArchive, err := archive.TarResource(srcInfo)
+		if err != nil {
+			return nil, fmt.Errorf("error creating tar from source %q: %v", from, err)
+		}
+		defer srcArchive.Close()
 
-	//		dstInfo := archive.CopyInfo{Path: to}
+		dstInfo := archive.CopyInfo{Path: to}
 
-	//		dstDir, content, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
-	//		if err != nil {
-	//			return nil, fmt.Errorf("error preparing copy from %q -> %q: %v", from, to, err)
-	//		}
-	//		defer content.Close()
-	//		err = d.DockerAPI.CopyToContainer(ctx, container.ID, dstDir, content, types.CopyToContainerOptions{})
-	//		if err != nil {
-	//			return nil, fmt.Errorf("error copying from %q -> %q: %v", from, to, err)
-	//		}
-	//	}
+		dstDir, content, err := archive.PrepareArchiveCopy(srcArchive, srcInfo, dstInfo)
+		if err != nil {
+			return nil, fmt.Errorf("error preparing copy from %q -> %q: %v", from, to, err)
+		}
+		defer content.Close()
+		err = d.DockerAPI.CopyToContainer(ctx, container.ID, dstDir, content, types.CopyToContainerOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("error copying from %q -> %q: %v", from, to, err)
+		}
+	}
 
-	//	err = d.DockerAPI.ContainerStart(ctx, container.ID, types.ContainerStartOptions{})
-	//	if err != nil {
-	//		return nil, fmt.Errorf("container start failed: %v", err)
-	//	}
+	err = d.DockerAPI.ContainerStart(ctx, container.ID, types.ContainerStartOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("container start failed: %v", err)
+	}
 
-	//	inspect, err := d.DockerAPI.ContainerInspect(ctx, container.ID)
-	//	if err != nil {
-	//		return nil, err
-	//	}
-	//	return &inspect, nil
-	return nil, nil
+	inspect, err := d.DockerAPI.ContainerInspect(ctx, container.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &inspect, nil
 }

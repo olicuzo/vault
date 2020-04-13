@@ -353,18 +353,19 @@ func (rc *DockerCluster) setupCA(opts *DockerClusterOptions) error {
 	return nil
 }
 
-func (rc *DockerCluster) raftJoinConfig() []api.RaftJoinRequest {
-	ret := make([]api.RaftJoinRequest, len(rc.ClusterNodes))
-	for _, node := range rc.ClusterNodes {
-		ret = append(ret, api.RaftJoinRequest{
-			LeaderAPIAddr:    fmt.Sprintf("https://%s:%d", node.Address.IP, node.Address.Port),
-			LeaderCACert:     string(rc.CACertPEM),
-			LeaderClientCert: string(node.ServerCertPEM),
-			LeaderClientKey:  string(node.ServerKeyPEM),
-		})
-	}
-	return ret
-}
+// TODO: unused at this point
+// func (rc *DockerCluster) raftJoinConfig() []api.RaftJoinRequest {
+// 	ret := make([]api.RaftJoinRequest, len(rc.ClusterNodes))
+// 	for _, node := range rc.ClusterNodes {
+// 		ret = append(ret, api.RaftJoinRequest{
+// 			LeaderAPIAddr:    fmt.Sprintf("https://%s:%d", node.Address.IP, node.Address.Port),
+// 			LeaderCACert:     string(rc.CACertPEM),
+// 			LeaderClientCert: string(node.ServerCertPEM),
+// 			LeaderClientKey:  string(node.ServerKeyPEM),
+// 		})
+// 	}
+// 	return ret
+// }
 
 // Don't call this until n.Address.IP is populated
 func (n *DockerClusterNode) setupCert() error {
