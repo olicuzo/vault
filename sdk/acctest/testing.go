@@ -18,6 +18,7 @@ import (
 	mathrand "math/rand"
 	"net"
 	"net/http"
+	"os"
 	"path/filepath"
 	"testing"
 	"time"
@@ -28,10 +29,10 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/internalshared/reloadutil"
+	"github.com/hashicorp/vault/vault"
 	"golang.org/x/net/http2"
 
 	docker "github.com/docker/docker/client"
-	"github.com/hashicorp/vault/vault"
 )
 
 // DockerCluster is used to managing the lifecycle of the test Vault cluster
@@ -672,3 +673,95 @@ func TestWaitLeaderMatches(ctx context.Context, client *api.Client, ready func(r
 }
 
 // end test helper methods
+
+// NewDockerCluster creates a managed docker container running Vault
+func NewDockerCluster(name string, base *vault.CoreConfig, opts *DockerClusterOptions) (rc *DockerCluster, err error) {
+	cluster := DockerCluster{
+		ClusterName: name,
+		RaftStorage: true,
+	}
+
+	if opts != nil && opts.TempDir != "" {
+		if _, err := os.Stat(opts.TempDir); os.IsNotExist(err) {
+			if err := os.MkdirAll(opts.TempDir, 0700); err != nil {
+				return nil, err
+			}
+		}
+		cluster.TempDir = opts.TempDir
+	} else {
+		tempDir, err := ioutil.TempDir("", "vault-test-cluster-")
+		if err != nil {
+			return nil, err
+		}
+		cluster.TempDir = tempDir
+	}
+	//	caDir := filepath.Join(cluster.TempDir, "ca")
+	//	if err := os.MkdirAll(caDir, 0755); err != nil {
+	//		return nil, err
+	//	}
+
+	//	var numCores int
+	//	if opts == nil || opts.NumCores == 0 {
+	//		numCores = DefaultNumCores
+	//	} else {
+	//		numCores = opts.NumCores
+	//	}
+
+	//	if opts != nil && opts.RequireClientAuth {
+	//		cluster.ClientAuthRequired = true
+	//	}
+
+	//	cidr := "192.168.128.0/20"
+	//	//baseIP, _, err := net.ParseCIDR(cidr)
+	//	//baseIPv4 := baseIP.To4()
+	//	//if err != nil {
+	//	//	return nil, err
+	//	//}
+	//	for i := 0; i < numCores; i++ {
+	//		nodeID := fmt.Sprintf("vault-%d", i)
+	//		node := &DockerClusterNode{
+	//			NodeID: nodeID,
+	//			//Address: &net.TCPAddr{
+	//			//	IP: net.IPv4(baseIPv4[0], baseIPv4[1], baseIPv4[2], byte(i+2)),
+	//			//	Port: 8200,
+	//			//},
+	//			Cluster: &cluster,
+	//			WorkDir: filepath.Join(cluster.TempDir, nodeID),
+	//		}
+	//		cluster.ClusterNodes = append(cluster.ClusterNodes, node)
+	//		if err := os.MkdirAll(node.WorkDir, 0700); err != nil {
+	//			return nil, err
+	//		}
+	//	}
+
+	//	err = cluster.setupCA(opts)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+
+	//	cli, err := docker.NewClientWithOpts(docker.FromEnv, docker.WithVersion("1.40"))
+	//	if err != nil {
+	//		return nil, err
+	//	}
+	//	netName := "vault-test"
+	//	_, err = SetupNetwork(cli, netName, cidr)
+	//	if err != nil {
+	//		return nil, err
+	//	}
+
+	//	for _, node := range cluster.ClusterNodes {
+	//		err := node.Start(cli, caDir, netName, node)
+	//		if err != nil {
+	//			return nil, err
+	//		}
+	//	}
+
+	//	if opts == nil || !opts.SkipInit {
+	//		if err := cluster.Initialize(context.Background()); err != nil {
+	//			return nil, err
+	//		}
+	//	}
+
+	//	return &cluster, nil
+	return nil, nil
+}
