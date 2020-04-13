@@ -31,7 +31,7 @@ require (
 	github.com/coreos/go-semver v0.2.0
 	github.com/denisenkom/go-mssqldb v0.0.0-20190412130859-3b1d194e553a
 	github.com/dnaeon/go-vcr v1.0.1 // indirect
-	github.com/docker/docker v1.13.1
+	github.com/docker/docker v1.4.2-0.20200319182547-c7ad2b866182
 	github.com/dsnet/compress v0.0.1 // indirect
 	github.com/duosecurity/duo_api_golang v0.0.0-20190308151101-6c680f768e74
 	github.com/elazarl/go-bindata-assetfs v1.0.0
@@ -111,6 +111,7 @@ require (
 	github.com/mitchellh/go-testing-interface v1.0.0
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/mitchellh/reflectwalk v1.0.1
+	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/ncw/swift v1.0.47
 	github.com/nwaples/rardecode v1.0.0 // indirect
 	github.com/oklog/run v1.0.0
@@ -148,5 +149,6 @@ require (
 	gopkg.in/mgo.v2 v2.0.0-20180705113604-9856a29383ce
 	gopkg.in/ory-am/dockertest.v3 v3.3.4
 	gopkg.in/square/go-jose.v2 v2.4.1
+	gotest.tools/v3 v3.0.2 // indirect
 	layeh.com/radius v0.0.0-20190322222518-890bc1058917
 )

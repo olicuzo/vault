@@ -58,6 +58,14 @@ type DockerCluster struct {
 	ClusterNodes       []*DockerClusterNode
 }
 
+// Cleanup stops all the containers.
+// TODO: error/logging
+func (rc *DockerCluster) Cleanup() {
+	for _, node := range rc.ClusterNodes {
+		node.Cleanup()
+	}
+}
+
 func (rc *DockerCluster) GetBarrierOrRecoveryKeys() [][]byte {
 	return rc.GetBarrierKeys()
 }
@@ -584,9 +592,9 @@ func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, net
 		NetName:       netName,
 		//IP:              n.Address.IP.String(),
 		CopyFromTo: map[string]string{
-			n.WorkDir:                             "/vault/config",
-			caDir:                                 "/usr/local/share/ca-certificates/",
-			"/Users/ncc/bin/vault-1.4-linux-prem": "/bin/vault",
+			n.WorkDir: "/vault/config",
+			caDir:     "/usr/local/share/ca-certificates/",
+			// "/Users/ncc/bin/vault-1.4-linux-prem": "/bin/vault",
 		},
 	}
 

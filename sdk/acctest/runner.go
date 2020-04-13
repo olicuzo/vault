@@ -26,7 +26,9 @@ type Runner struct {
 func (d *Runner) Start(ctx context.Context) (*types.ContainerJSON, error) {
 	hostConfig := &container.HostConfig{
 		PublishAllPorts: true,
-		AutoRemove:      false,
+		// AutoRemove:      false,
+		// TODO: configure auto remove
+		AutoRemove: true,
 	}
 
 	networkingConfig := &network.NetworkingConfig{}
