@@ -1,4 +1,3 @@
-// Package acctest is for acceptance testing
 package acctest
 
 import (
