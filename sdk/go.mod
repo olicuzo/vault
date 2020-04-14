@@ -41,6 +41,7 @@ require (
 	github.com/pierrec/lz4 v2.2.6+incompatible
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sirupsen/logrus v1.5.0 // indirect
+	github.com/y0ssar1an/q v1.0.10
 	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad
 	golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa
 	golang.org/x/sys v0.0.0-20200122134326-e047566fdf82

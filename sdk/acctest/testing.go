@@ -31,6 +31,7 @@ import (
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/internalshared/reloadutil"
 	"github.com/hashicorp/vault/vault"
+	"github.com/y0ssar1an/q"
 	"golang.org/x/net/http2"
 
 	docker "github.com/docker/docker/client"
@@ -595,6 +596,7 @@ func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, net
 			n.WorkDir: "/vault/config",
 			caDir:     "/usr/local/share/ca-certificates/",
 			// "/Users/ncc/bin/vault-1.4-linux-prem": "/bin/vault",
+			// TODO: find plugin binary pth and copy into container
 		},
 	}
 
@@ -761,6 +763,10 @@ func NewDockerCluster(name string, base *vault.CoreConfig, opts *DockerClusterOp
 	}
 
 	for _, node := range cluster.ClusterNodes {
+		// TODO: add test image path here to copy-from-CopyFromToto
+		absPluginExecPath, _ := filepath.Abs(os.Args[0])
+		q.Q("abs in acctest: ", absPluginExecPath)
+
 		err := node.Start(cli, caDir, netName, node)
 		if err != nil {
 			return nil, err
