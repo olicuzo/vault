@@ -484,7 +484,7 @@ type DockerClusterNode struct {
 	WorkDir           string
 	Cluster           *DockerCluster
 	container         *types.ContainerJSON
-	dockerAPI         *docker.Client
+	DockerAPI         *docker.Client
 }
 
 func (n *DockerClusterNode) APIClient() *api.Client {
@@ -520,14 +520,14 @@ func (n *DockerClusterNode) CreateAPIClient() (*api.Client, error) {
 }
 
 func (n *DockerClusterNode) Cleanup() {
-	if err := n.dockerAPI.ContainerKill(context.Background(), n.container.ID, "KILL"); err != nil {
+	if err := n.DockerAPI.ContainerKill(context.Background(), n.container.ID, "KILL"); err != nil {
 		// TODO handle
 		panic(err)
 	}
 }
 
 func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, netCIDR *DockerClusterNode, pluginBinPath string) error {
-	n.dockerAPI = cli
+	n.DockerAPI = cli
 
 	err := n.setupCert()
 	if err != nil {
@@ -607,7 +607,7 @@ func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, net
 				//"VAULT_REDIRECT_INTERFACE=eth0",
 				//"VAULT_REDIRECT_ADDR=https://0.0.0.0:8200",
 				// TODO: api addr set is funny
-				"VAULT_API_ADDR=https://0.0.0.0:8200",
+				//"VAULT_API_ADDR=https://0.0.0.0:8200",
 				"VAULT_API_ADDR=https://127.0.0.1:8200",
 				fmt.Sprintf("VAULT_REDIRECT_ADDR=https://%s:8200", n.Name()),
 			},
