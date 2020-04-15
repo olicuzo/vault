@@ -19,7 +19,9 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -523,7 +525,7 @@ func (n *DockerClusterNode) Cleanup() {
 	}
 }
 
-func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, netCIDR *DockerClusterNode) error {
+func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, netCIDR *DockerClusterNode, pluginBinPath string) error {
 	n.dockerAPI = cli
 
 	err := n.setupCert()
@@ -573,6 +575,22 @@ func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, net
 	if err != nil {
 		return err
 	}
+	// setup plugin bin copy if needed
+	copyFromTo := map[string]string{
+		n.WorkDir: "/vault/config",
+		caDir:     "/usr/local/share/ca-certificates/",
+		// "/Users/ncc/bin/vault-1.4-linux-prem": "/bin/vault",
+		// TODO: find plugin binary pth and copy into container
+	}
+	if pluginBinPath != "" {
+		// from -> to
+		// strip "test" from the source
+		base := path.Base(pluginBinPath)
+		dest := strings.TrimSuffix(base, ".test")
+		q.Q("--> acctest dest:", dest)
+		copyFromTo[pluginBinPath] = filepath.Join("/vault/config", dest)
+	}
+	q.Q("end copyFrom:", copyFromTo)
 	r := &Runner{
 		DockerAPI: cli,
 		ContainerConfig: &container.Config{
@@ -592,12 +610,7 @@ func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, net
 		ContainerName: n.Name(),
 		NetName:       netName,
 		//IP:              n.Address.IP.String(),
-		CopyFromTo: map[string]string{
-			n.WorkDir: "/vault/config",
-			caDir:     "/usr/local/share/ca-certificates/",
-			// "/Users/ncc/bin/vault-1.4-linux-prem": "/bin/vault",
-			// TODO: find plugin binary pth and copy into container
-		},
+		CopyFromTo: copyFromTo,
 	}
 
 	//if vaultPath, err := exec.LookPath("vault"); err != nil {
@@ -631,9 +644,11 @@ type DockerClusterOptions struct {
 	CACert             []byte
 	NumCores           int
 	TempDir            string
+	PluginTestBin      string
 	// SetupFunc is called after the cluster is started.
 	SetupFunc func(t testing.T, c *DockerCluster)
 	CAKey     *ecdsa.PrivateKey
+	// TODO: plugin source dir here?
 }
 
 //
@@ -685,7 +700,9 @@ func TestWaitLeaderMatches(ctx context.Context, client *api.Client, ready func(r
 
 // end test helper methods
 
-var DefaultNumCores = 3
+// TODO: change back to 3
+// var DefaultNumCores = 3
+var DefaultNumCores = 1
 
 // NewDockerCluster creates a managed docker container running Vault
 func NewDockerCluster(name string, base *vault.CoreConfig, opts *DockerClusterOptions) (rc *DockerCluster, err error) {
@@ -766,8 +783,11 @@ func NewDockerCluster(name string, base *vault.CoreConfig, opts *DockerClusterOp
 		// TODO: add test image path here to copy-from-CopyFromToto
 		absPluginExecPath, _ := filepath.Abs(os.Args[0])
 		q.Q("abs in acctest: ", absPluginExecPath)
+		pluginBinPath := ""
 
-		err := node.Start(cli, caDir, netName, node)
+		// TODO: maybe don't need plugin here due to replication.. but need it on 1
+		// at least
+		err := node.Start(cli, caDir, netName, node, pluginBinPath)
 		if err != nil {
 			return nil, err
 		}
