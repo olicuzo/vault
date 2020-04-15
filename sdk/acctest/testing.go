@@ -596,7 +596,7 @@ func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, net
 		ContainerConfig: &container.Config{
 			Image: "vault",
 			Entrypoint: []string{"/bin/sh", "-c", "update-ca-certificates && " +
-				"exec /usr/local/bin/docker-entrypoint.sh vault server -log-level=trace -config /vault/config/local.json"},
+				"exec /usr/local/bin/docker-entrypoint.sh vault server -log-level=trace -dev-plugin-dir=./vault/config -config /vault/config/local.json"},
 			//Cmd:	[]string{"vault", "server", "-config=/vault/config/local.json"},
 			Env: []string{
 				"VAULT_CLUSTER_INTERFACE=eth0",
