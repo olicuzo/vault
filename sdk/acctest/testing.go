@@ -151,6 +151,7 @@ func (rc *DockerCluster) Initialize(ctx context.Context) error {
 	if resp == nil {
 		return fmt.Errorf("nil response to init request")
 	}
+	q.Q("--> docker setup init response:", resp)
 	for _, k := range resp.Keys {
 		raw, err := hex.DecodeString(k)
 		if err != nil {
@@ -166,6 +167,7 @@ func (rc *DockerCluster) Initialize(ctx context.Context) error {
 		rc.RecoveryKeys = append(rc.RecoveryKeys, raw)
 	}
 	rc.RootToken = resp.RootToken
+	q.Q("--> docker init root token:", rc.RootToken)
 
 	// Write root token and barrier keys
 	err = ioutil.WriteFile(filepath.Join(rc.TempDir, "root_token"), []byte(rc.RootToken), 0755)
