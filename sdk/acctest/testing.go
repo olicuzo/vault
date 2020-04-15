@@ -563,6 +563,8 @@ func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, net
 		"log_level":            "TRACE",
 		"raw_storage_endpoint": true,
 		"plugin_directory":     "/vault/config",
+		//TODO: mlock
+		"disable_mlock": true,
 		// These are being provided by docker-entrypoint now, since we don't know
 		// the address before the container starts.
 		//"api_addr": fmt.Sprintf("https://%s:%d", n.Address.IP, n.Address.Port),
@@ -604,6 +606,7 @@ func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, net
 				"VAULT_CLUSTER_INTERFACE=eth0",
 				//"VAULT_REDIRECT_INTERFACE=eth0",
 				//"VAULT_REDIRECT_ADDR=https://0.0.0.0:8200",
+				"VAULT_API_ADDR=https://0.0.0.0:8200",
 				fmt.Sprintf("VAULT_REDIRECT_ADDR=https://%s:8200", n.Name()),
 			},
 			Labels:       nil,
