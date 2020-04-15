@@ -21,7 +21,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -589,9 +588,9 @@ func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, net
 		// from -> to
 		// strip "test" from the source
 		base := path.Base(pluginBinPath)
-		dest := strings.TrimSuffix(base, ".test")
-		q.Q("--> acctest dest:", dest)
-		copyFromTo[pluginBinPath] = filepath.Join("/vault/config", dest)
+		// dest := strings.TrimSuffix(base, ".test")
+		// q.Q("--> acctest dest:", dest)
+		copyFromTo[pluginBinPath] = filepath.Join("/vault/config", base)
 	}
 	q.Q("end copyFrom:", copyFromTo)
 	r := &Runner{
@@ -732,6 +731,12 @@ func NewDockerCluster(name string, base *vault.CoreConfig, opts *DockerClusterOp
 	if err := os.MkdirAll(caDir, 0755); err != nil {
 		return nil, err
 	}
+
+	// // TODO: compiling with command here
+	// buildDir := filepath.Join(cluster.TempDir, "build")
+	// if err := os.MkdirAll(caDir, 0755); err != nil {
+	// 	return nil, err
+	// }
 
 	var numCores int
 	if opts == nil || opts.NumCores == 0 {
