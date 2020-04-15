@@ -781,9 +781,13 @@ func NewDockerCluster(name string, base *vault.CoreConfig, opts *DockerClusterOp
 
 	for _, node := range cluster.ClusterNodes {
 		// TODO: add test image path here to copy-from-CopyFromToto
-		absPluginExecPath, _ := filepath.Abs(os.Args[0])
-		q.Q("abs in acctest: ", absPluginExecPath)
 		pluginBinPath := ""
+		if opts != nil {
+			q.Q("opts bin path in testing/new:", opts.PluginTestBin)
+			pluginBinPath = opts.PluginTestBin
+		} else {
+			q.Q("opts nil in cluster node start")
+		}
 
 		// TODO: maybe don't need plugin here due to replication.. but need it on 1
 		// at least
