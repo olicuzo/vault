@@ -563,6 +563,7 @@ func (n *DockerClusterNode) Start(cli *docker.Client, caDir, netName string, net
 		"cluster_name":         netName,
 		"log_level":            "TRACE",
 		"raw_storage_endpoint": true,
+		"plugin_directory":     "/vault/config",
 		// These are being provided by docker-entrypoint now, since we don't know
 		// the address before the container starts.
 		//"api_addr": fmt.Sprintf("https://%s:%d", n.Address.IP, n.Address.Port),
